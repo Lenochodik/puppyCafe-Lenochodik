@@ -5,6 +5,7 @@
 @addedOn: 2024-00-00
 */
 
+// = Types =========================================
 const player = "0"
 const cup = "1"
 const cupEmpty = "6"
@@ -22,7 +23,9 @@ const customer1 = "7"
 const customer2 = "8"
 const customer3 = "9"
 const customer4 = "+"
+// =================================================
 
+// = Legend ========================================
 setLegend(
   [player, bitmap`
 ................
@@ -298,7 +301,9 @@ CCCCC222266C0C0C
 6C66C666C66C6C0.
 CC6CC666CC6CC00.`],
 )
+// =================================================
 
+// = Sounds ========================================
 const soundWalkingPlayer = tune`
 80.42895442359249: F5~80.42895442359249,
 80.42895442359249: G5~80.42895442359249,
@@ -341,77 +346,130 @@ const soundGameOver = tune`
 122.95081967213115: C4/122.95081967213115,
 2213.1147540983607`
 const soundGameOn = tune`
-16000`
+150: B4^150,
+150: D5^150,
+150: C5^150,
+150: E5^150,
+150: D5^150,
+150: G5^150,
+150: E5^150,
+150: G5^150,
+150: B5^150,
+150: B5^150,
+3300`
+// =================================================
 
 
-
+// = Levels ========================================
 let level = 0
 const levels = [
   map`
-16-....aku
+.......aku
 55555552k3
-.79+8..aku
+.......aku
 55555552k3
 .......aku
 55555552k3
 .......aku
 55555552k3`
 ]
+// =================================================
 
-setMap(levels[level])
-setBackground(floor)
-
-addSprite(0, 0, cup)
-addSprite(8, 1, player)
-
-const playerObject = getFirst(player)
+// = Constants =====================================
+const playerMaxX = 8
+const playerStartY = 1
 
 const gameLoopIntervalDuration = 1000
 const cupMovingLeftSpeed = 100
 const cupMovingRightSpeed = 250
+
+const customerTypes = [customer1, customer2, customer3, customer4]
+// =================================================
+
+// = Variables, game state =========================
 let gameState = {
   tick: 0,
-  lastCupSpawnedAt: 0
+  lastCupSpawnedAt: 0,
+  spawnedCups: [],
+  isRunning: true,
 }
+// =================================================
 
+// = Prepare the game ==============================
+setMap(levels[level])
+setBackground(floor)
 
+addSprite(playerMaxX, playerStartY, player)
+const playerObject = getFirst(player)
+// =================================================
+
+// = Controls ======================================
 onInput("s", () => {
+  if (!gameState.isRunning) return
+
   playerObject.y += 2
   playTune(soundWalkingPlayer)
 })
 
 onInput("w", () => {
+  if (!gameState.isRunning) return
+
   playerObject.y -= 2
   playTune(soundWalkingPlayer)
 })
 
 onInput("k", () => {
+  if (!gameState.isRunning) return
+
   // Limit how fast can cups be send
-  if(performance.now() - gameState.lastCupSpawnedAt <= 2 * cupMovingLeftSpeed)
+  if (performance.now() - gameState.lastCupSpawnedAt <= 2 * cupMovingLeftSpeed)
     return
 
   gameState.lastCupSpawnedAt = performance.now()
-  
+
   addSprite(playerObject.x - 1, playerObject.y - 1, cup)
   const tile = getTile(playerObject.x - 1, playerObject.y - 1)
   const cupObject = tile.find(x => x.type === cup)
 
-  setInterval(() => {
+  const interval = setInterval(() => {
     cupObject.x--
+
+    // Check for customers on tile before
+    const tileBefore = getTile(cupObject.x - 1, cupObject.y)
+    const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
+    if (customer) {
+      // TODO:
+    }
+
+    // All the way to the end without a customer = broken glass
+    if (cupObject.x === 0) {
+      cupObject.type = cupBroken
+      gameState.isRunning = false
+      clearInterval(interval)
+      playTune(soundBreakingCup)
+
+
+      clearText()
+      addText("Game Over!", {
+        x: width() / 2,
+        y: height(),
+        color: color`6`
+      })
+    }
   }, cupMovingLeftSpeed)
-  
+
+  gameState.spawnedCups.push({
+    object: cupObject,
+    tick: gameState.tick,
+    interval: interval,
+  })
+
   playTune(soundMovingCup)
 })
+// =================================================
 
-
-
+// = Game loop =====================================
 setInterval(() => {
   gameState.tick++
-
-  // Keep this code if needed but maybe I will rather use interval at each object separately to desync it
-  /*const cupObjects = getAll(cup)
-
-  for(const cup of cupObjects) {
-    cup.x--
-  }*/
 }, gameLoopIntervalDuration)
+// =================================================
