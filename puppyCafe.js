@@ -7,12 +7,21 @@
 
 const player = "0"
 const cup = "1"
+const cupEmpty = "6"
+const cupBroken = "-"
 const bench = "2"
 const robotMachine = "3"
 const floor = "4"
+const floorEnd = "*"
+const floorEnd2 = "a"
 const benchMiddle = "5"
 const floorKitchen = "k"
-const floorUnderRobot = "u"
+const deskUnderRobot = "u"
+
+const customer1 = "7"
+const customer2 = "8"
+const customer3 = "9"
+const customer4 = "+"
 
 setLegend(
   [player, bitmap`
@@ -49,6 +58,40 @@ setLegend(
 ...1LCDC99CL1...
 ...1LCCCCCCL1...
 ....1LLLLLL1....`],
+  [cupEmpty, bitmap`
+....1...........
+...1D1..........
+...1D1..........
+....1D1.........
+....1D111111....
+...1LLDLLLLL1...
+..1L11D11111L1..
+...1LLLLLLLL1...
+...1L..D...L1...
+...1L...D..L1...
+...1L...D..L1...
+...1L....D.L1...
+...1L....D.L1...
+...1LCC.CDCL1...
+...1LCCCCCCL1...
+....1LLLLLL1....`],
+  [cupBroken, bitmap`
+....1...........
+...1D1..........
+...1D1..........
+....1D1.........
+....1D111111....
+...1LLD000LL1...
+..1011D11111L1..
+...10LL00L0L1...
+...1L0.D.0.01...
+...10.000.0L1...
+...10.0.D.001...
+...10000.0.01...
+...10..0.0001...
+...1L.0.0D.01...
+...100CC0CCC11..
+.1CC10L0L0LCCC1.`],
   [bench, bitmap`
 LLLLLLLLLLLLLLLL
 1111111111111110
@@ -100,6 +143,40 @@ CCCCFCCCCCCCCCCC
 CCCCFCCCCCCCCCCC
 CCCCFCCCCCCCCCCC
 FFFFFFFFFFFFFFFF`],
+  [floorEnd, bitmap`
+CCCCCCCCCLLLLLLL
+CCCCCCCCLLL11111
+CCCCCCCLL1L11111
+FFFFFFLLLLLLLLLL
+CCCCFLL111111111
+CCCCLL1111111111
+CCCLL11111111111
+FFLLLLLLLLLLLLLL
+CLL1111111L11111
+CL11111111L11111
+CL11111111L11111
+LLLLLLLLLLLLLLLL
+L111L11111111111
+L111L11111111111
+L111L11111111111
+LLLLLLLLLLLLLLLL`],
+  [floorEnd2, bitmap`
+CCCCCCCCCCLLLLLL
+CCCCCCCCCCL11111
+CCCCCCCCCLL11111
+FFFFFFFFFLLLLLLL
+CCCCFCCCLL111111
+CCCCFCCCL1111111
+CCCCFCCLL1111111
+FFFFFFFLLLLLLLLL
+CCCCCCLL11L11111
+CCCCCCL111L11111
+CCCCCLL111L11111
+FFFFFLLLLLLLLLLL
+CCCCLL1111111111
+CCCCL11111111111
+CCCLL11111111111
+LLLLLLLLLLLLLLLL`],
   [benchMiddle, bitmap`
 LLLLLLLLLLLLLLLL
 1111111111111111
@@ -134,7 +211,7 @@ LLLLLLLLLLLLLLLL
 1111L11111111111
 1111L11111111111
 LLLLLLLLLLLLLLLL`],
-  [floorUnderRobot, bitmap`
+  [deskUnderRobot, bitmap`
 F666666666666666
 F666662266666666
 F666626666666666
@@ -151,35 +228,98 @@ F6666FFFFFFFFFFF
 F666FFFFFFFFFFFF
 F666FFFFFFFFFFFF
 F66FFFFFFFFFFFFF`],
+  //
+  [customer1, bitmap`
+...0L0.....0L0..
+..0L1L0...0L1L0.
+..0L81L000L18L0.
+..0L8LLLLLLL8L0.
+..0LLLLLLLLLLL0.
+...0L0LLLLL0L0..
+.0.0LL20002LL0..
+0L00L2200022L0..
+0LL0002202200...
+.010LL00200LL0..
+.011LLLLLLLLL0..
+.01LLLLLLLLLL0..
+.01LLL11111LLL0.
+.0LLLL11111LLL0.
+.02LL1211121LL20
+022LL2211122LL22`],
+  [customer2, bitmap`
+...11....11.....
+..1CC1111CC1....
+.1C2CCCCCC2C1...
+.1CC22CC22CC1...
+.1C20222202C1...
+.1C22200222C111.
+.1C20222202C1CC1
+1.1C200002C1C11C
+C11CCCCCCC61C1CC
+CCCCC222266C1C1C
+1CCC222266CC1.1C
+.1CC2222CCCC11C1
+.1CC222266CC1C1.
+.1CC2222266CC1..
+.11CC2222C611...
+1CCCCCCCCCCCC1..`],
+  [customer3, bitmap`
+................
+...1......1.....
+..121....121....
+.12821..12821...
+.198891198891...
+.198999999891...
+.199099990991...
+..199900999111..
+..1902002092291.
+..19202202912991
+...19999991.1191
+..19922229911991
+.19922222299991.
+11999222999911..
+219929292999121.
+229229992292221.`],
+  [customer4, bitmap`
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................
+................`],
 )
 
-setSolids([])
 
 let level = 0
 const levels = [
   map`
-.......kku
-5555552kk3
-.......kku
-5555552kk3
-.......kku
-5555552kk3
-.......kku
-5555552kk3`
+16-....aku
+55555552k3
+079.8..aku
+55555552k3
+.......aku
+55555552k3
+.......aku
+55555552k3`
 ]
 
 setMap(levels[level])
-
 setBackground(floor)
 
-setPushables({
-  [player]: []
-})
+addSprite(0, 0, cup)
+addSprite(8, 1, player)
+
 
 onInput("s", () => {
   getFirst(player).y += 1
-})
-
-afterInput(() => {
-
 })
