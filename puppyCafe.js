@@ -350,7 +350,7 @@ const levels = [
   map`
 16-....aku
 55555552k3
-079+8..aku
+.79+8..aku
 55555552k3
 .......aku
 55555552k3
@@ -364,7 +364,54 @@ setBackground(floor)
 addSprite(0, 0, cup)
 addSprite(8, 1, player)
 
+const playerObject = getFirst(player)
+
+const gameLoopIntervalDuration = 1000
+const cupMovingLeftSpeed = 100
+const cupMovingRightSpeed = 250
+let gameState = {
+  tick: 0,
+  lastCupSpawnedAt: 0
+}
+
 
 onInput("s", () => {
-  getFirst(player).y += 1
+  playerObject.y += 2
+  playTune(soundWalkingPlayer)
 })
+
+onInput("w", () => {
+  playerObject.y -= 2
+  playTune(soundWalkingPlayer)
+})
+
+onInput("k", () => {
+  // Limit how fast can cups be send
+  if(performance.now() - gameState.lastCupSpawnedAt <= 2 * cupMovingLeftSpeed)
+    return
+
+  gameState.lastCupSpawnedAt = performance.now()
+  
+  addSprite(playerObject.x - 1, playerObject.y - 1, cup)
+  const tile = getTile(playerObject.x - 1, playerObject.y - 1)
+  const cupObject = tile.find(x => x.type === cup)
+
+  setInterval(() => {
+    cupObject.x--
+  }, cupMovingLeftSpeed)
+  
+  playTune(soundMovingCup)
+})
+
+
+
+setInterval(() => {
+  gameState.tick++
+
+  // Keep this code if needed but maybe I will rather use interval at each object separately to desync it
+  /*const cupObjects = getAll(cup)
+
+  for(const cup of cupObjects) {
+    cup.x--
+  }*/
+}, gameLoopIntervalDuration)
