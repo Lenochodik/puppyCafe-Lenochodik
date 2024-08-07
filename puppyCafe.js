@@ -1,9 +1,22 @@
 /*
 @title: PuppyCafe
 @author: Lenochodik
-@tags: []
+@tags: ['classic', 'tapper', 'endless']
 @addedOn: 2024-00-00
 */
+
+// = Helper functions ==============================
+// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+function getRandomInt(min, max) {
+  const minCeiled = Math.ceil(min)
+  const maxFloored = Math.floor(max)
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled) // The maximum is exclusive and the minimum is inclusive
+}
+
+function getRandomItem(arr) {
+  return arr[getRandomInt(0, arr.length)]
+}
+// =================================================
 
 // = Types =========================================
 const player = "0"
@@ -328,7 +341,11 @@ const soundBreakingCup = tune`
 71.59904534606206: F4~71.59904534606206 + D4/71.59904534606206,
 1646.7780429594272`
 const soundCatchingCup = tune`
-16000`
+100: B4~100,
+100: C5~100,
+100: D5~100,
+100: E5~100,
+2800`
 const soundGameOver = tune`
 122.95081967213115: C5/122.95081967213115 + E5/122.95081967213115,
 122.95081967213115: B4/122.95081967213115 + D5/122.95081967213115,
@@ -378,6 +395,8 @@ const levels = [
 // = Constants =====================================
 const playerMaxX = 8
 const playerStartY = 1
+
+const benchesCount = 4
 
 const gameLoopIntervalDuration = 1000
 const cupMovingLeftSpeed = 100
@@ -437,12 +456,15 @@ onInput("k", () => {
     // Check for customers on tile before
     const tileBefore = getTile(cupObject.x - 1, cupObject.y)
     const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
+    console.log("c", customer)
     if (customer) {
-      // TODO:
+      
+      clearInterval(interval)
+      playTune(soundCatchingCup)
     }
 
     // All the way to the end without a customer = broken glass
-    if (cupObject.x === 0) {
+    else if (cupObject.x === 0) {
       cupObject.type = cupBroken
       gameState.isRunning = false
       clearInterval(interval)
@@ -471,5 +493,9 @@ onInput("k", () => {
 // = Game loop =====================================
 setInterval(() => {
   gameState.tick++
+
+  // Spawn new customer
+  const benchIndex = getRandomInt(0, benchesCount)
+  addSprite(0, benchIndex * 2, getRandomItem(customerTypes))
 }, gameLoopIntervalDuration)
 // =================================================
