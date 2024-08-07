@@ -36,10 +36,30 @@ const customer1 = "7"
 const customer2 = "8"
 const customer3 = "9"
 const customer4 = "+"
+
+const debug = "D"
 // =================================================
 
 // = Legend ========================================
 setLegend(
+  // Debug tile
+  [debug, bitmap`
+922222233222222H
+29222223322222H2
+2292222332222H22
+222922233222H222
+22229223322H2222
+2222292332H22222
+222222933H222222
+5555555555555555
+5555555555555555
+222222C334222222
+22222C2332422222
+2222C22332242222
+222C222332224222
+22C2222332222422
+2C22222332222242
+C222222332222224`],
   // Customers
   [customer1, bitmap`
 ...0L0.....0L0..
@@ -509,12 +529,17 @@ onInput("k", () => {
   const cupObject = tile.find(x => x.type === cup)
 
   const interval = setInterval(() => {
+    // Garbage collection
+    if(!cupObject) {
+      clearInterval(interval)
+      return
+    }
+    
     cupObject.x--
 
     // Check for customers on tile before
     const tileBefore = [...getTile(cupObject.x, cupObject.y), ...getTile(cupObject.x - 1, cupObject.y)]
     const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
-    console.log("c", customer)
     if (customer) {
       clearInterval(interval)
       playTune(soundCatchingCup)
@@ -523,8 +548,19 @@ onInput("k", () => {
       printScore()
 
       // TODO: add delay so it looks better
-      cupObject.remove()
+      const spawnedCustomerToRemoveIndex = gameState.spawnedCustomers.indexOf(x => x.object === customer)
+      if(spawnedCustomerToRemoveIndex !== -1) {
+        clearInterval(gameState.spawnedCustomers[spawnedCustomerToRemoveIndex].interval)
+        gameState.spawnedCustomers.splice(spawnedCustomerToRemoveIndex, 1)
+      }
       customer.remove()
+
+      const spawnedCupToRemoveIndex = gameState.spawnedCups.indexOf(x => x.object === cupObject)
+      if(spawnedCupToRemoveIndex !== -1) {
+        clearInterval(gameState.spawnedCups[spawnedCupToRemoveIndex].interval)
+        gameState.spawnedCups.splice(spawnedCupToRemoveIndex, 1)
+      }
+      cupObject.remove()
     }
 
     // All the way to the end without a customer = broken glass
@@ -558,17 +594,22 @@ const gameLoopInterval = setInterval(() => {
   const benchIndex = getRandomInt(0, benchesCount)
   const customerType = getRandomItem(customerTypes)
   addSprite(0, benchIndex * 2, customerType)
+  playTune(soundWalkingCustomer)
   const tile = getTile(0, benchIndex * 2)
   const customerObject = tile.find(x => x.type === customerType)
 
   const interval = setInterval(() => {
-    if(!customerObject)
+    // Garbage collection
+    if(!customerObject || customerObject.type === debug) {
       clearInterval(interval)
+      return
+    }
     
     customerObject.x++
 
     if (customerObject.x >= playerObject.x) {
       console.log("Debug: customer too close game over", customerObject)
+      addSprite(customerObject.x, customerObject.y, customerObject.type)
       gameOver()
     }
 
