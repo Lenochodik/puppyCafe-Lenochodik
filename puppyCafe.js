@@ -366,11 +366,11 @@ const soundBreakingCup = tune`
   71.59904534606206: F4~71.59904534606206 + D4/71.59904534606206,
   1646.7780429594272`
 const soundCatchingCup = tune`
-  100: B4~100,
-  100: C5~100,
-  100: D5~100,
-  100: E5~100,
-  2800`
+100: B4~100,
+100: C5~100,
+100: D5~100,
+100: E5~100,
+2800`
 const soundGameOver = tune`
   122.95081967213115: C5/122.95081967213115 + E5/122.95081967213115,
   122.95081967213115: B4/122.95081967213115 + D5/122.95081967213115,
@@ -432,8 +432,10 @@ const playerStartY = 1
 const benchesCount = 4
 
 const cupMovingLeftSpeed = 100
-const cupMovingRightSpeed = 250
+const cupMovingRightSpeed = 1250/2
 const customerMovingSpeed = 1250
+
+const customerHasEnoughProbability = 0.6
 
 const customerTypes = [customer1, customer2, customer3, customer4]
 
@@ -442,12 +444,10 @@ const cupScore = 50
 
 // = Variables, game state =========================
 let gameState = {
+  isRunning: true,
   tick: 0,
   score: 0,
   lastCupSpawnedAt: 0,
-  spawnedCups: [],
-  spawnedCustomers: [],
-  isRunning: true,
 }
 // =================================================
 
@@ -494,10 +494,8 @@ async function gameOver() {
 
   // Clear all intervals
   clearInterval(customersInterval)
-  for (let customerToStop of gameState.spawnedCustomers)
-    clearInterval(customerToStop.interval)
-  for (let cupToStop of gameState.spawnedCups)
-    clearInterval(cupToStop.interval)
+  clearInterval(cupsInterval)
+  clearInterval(cupsEmptyInterval)
 
   await delay(1000)
   playTune(soundGameOver)
@@ -526,67 +524,77 @@ onInput("k", () => {
   if (performance.now() - gameState.lastCupSpawnedAt <= 2 * cupMovingLeftSpeed)
     return
 
-  const cupObject = addSpriteWithReturn(playerObject.x - 1, playerObject.y - 1, cup)
+  addSpriteWithReturn(playerObject.x - 1, playerObject.y - 1, cup)
+  gameState.lastCupSpawnedAt = performance.now()
+  playTune(soundMovingCup)
+})
+// =================================================
 
-  const interval = setInterval(() => {
-    // Garbage collection
-    if (!cupObject) {
-      clearInterval(interval)
-      return
-    }
+// = Game loops ====================================
+// - Moving cups -----------------------------------
+const cupsInterval = setInterval(() => {
+  const cups = getAll(cup)
 
+  for (let cupObject of cups) {
     cupObject.x--
 
     // Check for customers on tile before
     const tileBefore = [...getTile(cupObject.x, cupObject.y), ...getTile(cupObject.x - 1, cupObject.y)]
     const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
     if (customer) {
-      clearInterval(interval)
       playTune(soundCatchingCup)
 
       gameState.score += cupScore
       printScore()
 
-      // TODO: add delay so it looks better
-      const spawnedCustomerToRemoveIndex = gameState.spawnedCustomers.indexOf(x => x.object === customer)
-      if (spawnedCustomerToRemoveIndex !== -1) {
-        clearInterval(gameState.spawnedCustomers[spawnedCustomerToRemoveIndex].interval)
-        gameState.spawnedCustomers.splice(spawnedCustomerToRemoveIndex, 1)
+      // Either customer has enough => remove
+      if(Math.random() < customerHasEnoughProbability) {
+        customer.remove()
+        cupObject.remove()
       }
-      customer.remove()
-
-      const spawnedCupToRemoveIndex = gameState.spawnedCups.indexOf(x => x.object === cupObject)
-      if (spawnedCupToRemoveIndex !== -1) {
-        clearInterval(gameState.spawnedCups[spawnedCupToRemoveIndex].interval)
-        gameState.spawnedCups.splice(spawnedCupToRemoveIndex, 1)
+      // Or push him away with need for one more drink (at least)
+      else {
+        customer.x--
+        cupObject.x--
+        cupObject.type = cupEmpty
       }
-      cupObject.remove()
     }
 
     // All the way to the end without a customer = broken glass
     else if (cupObject.x === 0) {
       cupObject.type = cupBroken
-      clearInterval(interval)
       playTune(soundBreakingCup)
-
-      console.log("Debug: broken glass game over")
       gameOver()
     }
-  }, cupMovingLeftSpeed)
+  }
+}, cupMovingLeftSpeed)
 
-  gameState.spawnedCups.push({
-    object: cupObject,
-    tick: gameState.tick,
-    interval: interval,
-  })
+// - Moving empty cups -----------------------------
+const cupsEmptyInterval = setInterval(() => {
+  const cups = getAll(cupEmpty)
 
-  gameState.lastCupSpawnedAt = performance.now()
+  for (let cupObject of cups) {
+    cupObject.x++
 
-  playTune(soundMovingCup)
-})
-// =================================================
+    // Empty cup went all the way back
+    if(cupObject.x >= playerObject.x) {
+      // there is no player = broken glass
+      if(cupObject.y + 1 !== playerObject.y) {
+        cupObject.type = cupBroken
+        cupObject.y++
+        playTune(soundBreakingCup)
+        gameOver()
+      }
+      else {
+        playTune(soundCatchingCup)
+        cupObject.remove()
+      }
+    }
+  }
+}, cupMovingRightSpeed)
 
-// = Game loop - customers ==========================
+
+// - Moving and spawning customers -----------------
 const customersInterval = setInterval(() => {
   // Move existing customers
   let customers = []
@@ -596,7 +604,7 @@ const customersInterval = setInterval(() => {
   for (let customerObject of customers) {
     customerObject.x++
 
-    if (customerObject.x >= playerObject.x) {
+    if (customerObject.x >= playerObject.x - 1) {
       playTune(soundAngryCustomer)
       gameOver()
     }
@@ -604,11 +612,11 @@ const customersInterval = setInterval(() => {
 
   // Spawn new random customer
   gameState.tick++
-  if (gameState.tick % 2 === 0) return // Spawn new one only every 2nd tick
-  
+  if (gameState.tick % 3 === 0) return // Spawn new one only every 2nd tick
+
   const benchIndex = getRandomInt(0, benchesCount)
   const customerType = getRandomItem(customerTypes)
-  
+
   playTune(soundWalkingCustomer)
   addSprite(0, benchIndex * 2, customerType)
 }, customerMovingSpeed)
