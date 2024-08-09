@@ -20,6 +20,7 @@ function getRandomItem(arr) {
 
 // = Types =========================================
 const player = "0"
+const playerGameOver = "P"
 const cup = "1"
 const cupEmpty = "6"
 const cupBroken = "-"
@@ -37,29 +38,10 @@ const customer2 = "8"
 const customer3 = "9"
 const customer4 = "+"
 
-const debug = "D"
 // =================================================
 
 // = Legend ========================================
 setLegend(
-  // Debug tile
-  [debug, bitmap`
-  922222233222222H
-  29222223322222H2
-  2292222332222H22
-  222922233222H222
-  22229223322H2222
-  2222292332H22222
-  222222933H222222
-  5555555555555555
-  5555555555555555
-  222222C334222222
-  22222C2332422222
-  2222C22332242222
-  222C222332224222
-  22C2222332222422
-  2C22222332222242
-  C222222332222224`],
   // Customers
   [customer1, bitmap`
   ...0L0.....0L0..
@@ -147,6 +129,23 @@ setLegend(
   .1CCFFF999FFFCC1
   .12CF2F999F2FCC1
   122C22FFFFF22CC1`],
+  [playerGameOver, bitmap`
+.....111.....111
+....1CCC1..11CCC
+...1CCCCC11CCCCC
+..1CCCCCC1CCCFF2
+.1CC0CCC1FFFFF22
+.1CCCC220CCFFFFF
+.1CCC0020CCFF99F
+.1CCC0002CCFD99F
+.1CCC0020CCFF99F
+.1CCCC220CCFFFFF
+.1CC0CCC1FFFFF22
+..1CCCCCC1CCCFF2
+...1CCCCC12CCCCC
+....1CCC12222C22
+.....111C2111112
+........11.....1`],
   // Cups
   [cup, bitmap`
   .......11..1D1..
@@ -343,28 +342,28 @@ setLegend(
 
 // = Sounds ========================================
 const soundWalkingPlayer = tune`
-  80.42895442359249: F5~80.42895442359249,
-  80.42895442359249: G5~80.42895442359249,
-  2412.8686327077744`
+80.42895442359249: F5~80.42895442359249,
+80.42895442359249: G5~80.42895442359249,
+2412.8686327077744`
 const soundWalkingCustomer = tune`
-  170.45454545454547: G5/170.45454545454547,
-  5284.09090909091`
+170.45454545454547: G5/170.45454545454547,
+5284.09090909091`
 const soundMovingCup = tune`
-  96.7741935483871: F5^96.7741935483871,
-  96.7741935483871: G5^96.7741935483871,
-  96.7741935483871: F5^96.7741935483871,
-  2806.451612903226`
+96.7741935483871: F5^96.7741935483871,
+96.7741935483871: G5^96.7741935483871,
+96.7741935483871: F5^96.7741935483871,
+2806.451612903226`
 const soundBreakingCup = tune`
-  71.59904534606206: C5-71.59904534606206 + B4~71.59904534606206,
-  71.59904534606206: B4-71.59904534606206 + A4~71.59904534606206,
-  71.59904534606206: A4-71.59904534606206 + G4~71.59904534606206,
-  71.59904534606206: G4-71.59904534606206 + F4~71.59904534606206,
-  71.59904534606206: F4-71.59904534606206 + E4~71.59904534606206,
-  71.59904534606206: E4-71.59904534606206 + D4~71.59904534606206,
-  71.59904534606206: F4~71.59904534606206,
-  71.59904534606206: E4~71.59904534606206 + C4/71.59904534606206,
-  71.59904534606206: F4~71.59904534606206 + D4/71.59904534606206,
-  1646.7780429594272`
+71.59904534606206: C5-71.59904534606206 + B4~71.59904534606206,
+71.59904534606206: B4-71.59904534606206 + A4~71.59904534606206,
+71.59904534606206: A4-71.59904534606206 + G4~71.59904534606206,
+71.59904534606206: G4-71.59904534606206 + F4~71.59904534606206,
+71.59904534606206: F4-71.59904534606206 + E4~71.59904534606206,
+71.59904534606206: E4-71.59904534606206 + D4~71.59904534606206,
+71.59904534606206: F4~71.59904534606206,
+71.59904534606206: E4-71.59904534606206 + C4/71.59904534606206,
+71.59904534606206: D4/71.59904534606206 + F4~71.59904534606206,
+1646.7780429594272`
 const soundCatchingCup = tune`
 100: B4~100,
 100: C5~100,
@@ -378,47 +377,47 @@ const soundWalkingAway = tune`
 100: G5-100,
 2800`
 const soundGameOver = tune`
-  122.95081967213115: C5/122.95081967213115 + E5/122.95081967213115,
-  122.95081967213115: B4/122.95081967213115 + D5/122.95081967213115,
-  122.95081967213115: A4/122.95081967213115 + C5/122.95081967213115,
-  122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
-  122.95081967213115: A4/122.95081967213115,
-  122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
-  122.95081967213115: A4/122.95081967213115,
-  122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
-  122.95081967213115: F4/122.95081967213115 + A4/122.95081967213115,
-  122.95081967213115: E4/122.95081967213115 + G4/122.95081967213115,
-  122.95081967213115: D4/122.95081967213115 + F4/122.95081967213115,
-  122.95081967213115: C4/122.95081967213115 + E4/122.95081967213115,
-  122.95081967213115: D4/122.95081967213115,
-  122.95081967213115: C4/122.95081967213115,
-  2213.1147540983607`
+122.95081967213115: C5/122.95081967213115 + E5/122.95081967213115,
+122.95081967213115: B4/122.95081967213115 + D5/122.95081967213115,
+122.95081967213115: A4/122.95081967213115 + C5/122.95081967213115,
+122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
+122.95081967213115: A4/122.95081967213115,
+122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
+122.95081967213115: A4/122.95081967213115,
+122.95081967213115: G4/122.95081967213115 + B4/122.95081967213115,
+122.95081967213115: F4/122.95081967213115 + A4/122.95081967213115,
+122.95081967213115: E4/122.95081967213115 + G4/122.95081967213115,
+122.95081967213115: D4/122.95081967213115 + F4/122.95081967213115,
+122.95081967213115: C4/122.95081967213115 + E4/122.95081967213115,
+122.95081967213115: D4/122.95081967213115,
+122.95081967213115: C4/122.95081967213115,
+2213.1147540983607`
 const soundGameOn = tune`
-  150: B4^150,
-  150: D5^150,
-  150: C5^150,
-  150: E5^150,
-  150: D5^150,
-  150: G5^150,
-  150: E5^150,
-  150: G5^150,
-  150: B5^150,
-  150: B5^150,
-  3300`
+150: B4^150,
+150: D5^150,
+150: C5^150,
+150: E5^150,
+150: D5^150,
+150: G5^150,
+150: E5^150,
+150: G5^150,
+150: B5^150,
+150: B5^150,
+3300`
 const soundAngryCustomer = tune`
-  155.44041450777203: B4/155.44041450777203,
-  155.44041450777203: D5/155.44041450777203 + B4^155.44041450777203,
-  155.44041450777203: F5/155.44041450777203 + D5^155.44041450777203,
-  155.44041450777203: G5/155.44041450777203 + F5^155.44041450777203,
-  155.44041450777203: A5/155.44041450777203 + G5^155.44041450777203,
-  155.44041450777203: B5/155.44041450777203 + A5^155.44041450777203,
-  4041.450777202073`
+155.44041450777203: B4/155.44041450777203,
+155.44041450777203: D5/155.44041450777203 + B4^155.44041450777203,
+155.44041450777203: F5/155.44041450777203 + D5^155.44041450777203,
+155.44041450777203: G5/155.44041450777203 + F5^155.44041450777203,
+155.44041450777203: A5/155.44041450777203 + G5^155.44041450777203,
+155.44041450777203: B5/155.44041450777203 + A5^155.44041450777203,
+4041.450777202073`
 const soundLevelUp = tune`
-100: B4/100,
-100: D5/100,
-100: G5/100,
+100: B4/100 + D5-100,
+100: D5/100 + F5-100,
+100: G5/100 + B5-100,
 100: E5/100 + D5/100,
-100: G5/100,
+100: G5/100 + B5-100,
 2700`
 // =================================================
 
@@ -445,10 +444,10 @@ const playerStartY = 1
 const benchesCount = 4
 
 const cupMovingLeftSpeed = 100
-const cupMovingRightSpeed = 1250/2
+const cupMovingRightSpeed = 1250 / 2
 const customerMovingSpeed = 1250
 
-const levelUpIntervalDuration = 60 * 1000
+const levelUpIntervalDuration = 30 * 1000
 
 const customerHasEnoughProbability = 0.6
 
@@ -470,15 +469,41 @@ let gameState = {
 // =================================================
 
 // = Prepare the game ==============================
-setMap(levels[level])
-setBackground(floor)
+let playerObject = getFirst(player)
 
-addSprite(playerMaxX, playerStartY, player)
-const playerObject = getFirst(player)
+let cupsInterval = null
+let cupsEmptyInterval = null
+let customersInterval = null
+let levelUpInterval = null
 
-printScore()
+function newGame() {
+  setMap(levels[level])
+  setBackground(floor)
 
-playTune(soundGameOn)
+  addSprite(playerMaxX, playerStartY, player)
+  playerObject = getFirst(player)
+
+  gameState = {
+    isRunning: true,
+    tick: 0,
+    score: 0,
+    lastCupSpawnedAt: 0,
+    cupMovingLeftSpeed: cupMovingLeftSpeed,
+    cupMovingRightSpeed: cupMovingRightSpeed,
+    customerMovingSpeed: customerMovingSpeed,
+  }
+
+  printScore()
+
+  playTune(soundGameOn)
+
+  cupsInterval = createCupsInterval()
+  cupsEmptyInterval = createCupsEmptyInterval()
+  customersInterval = createCustomersInterval()
+  levelUpInterval = createLevelUpInterval()
+}
+
+newGame()
 // =================================================
 
 // = Functions =====================================
@@ -500,7 +525,7 @@ function printScore() {
   })
 }
 
-async function gameOver() {
+async function gameOver(wasAngryCustomer = false, angryCustomerY = null) {
   // Stop the game
   gameState.isRunning = false
 
@@ -517,6 +542,23 @@ async function gameOver() {
   clearInterval(cupsInterval)
   clearInterval(cupsEmptyInterval)
   clearInterval(levelUpInterval)
+
+  // Player gets out animation (for angry customer) -------------
+  if (wasAngryCustomer) {
+    addSprite(playerObject.x, angryCustomerY, playerGameOver)
+    playerObject.remove()
+
+    const playerGameOverObject = getFirst(playerGameOver)
+    for (let i = 0; i <= playerObject.x; i++) {
+      await delay(150)
+      if (playerGameOverObject.x === 0) {
+        playerGameOverObject.remove()
+        break
+      }
+      playerGameOverObject.x--
+    }
+  }
+  // -------------------------------------------------------------
 
   await delay(1000)
   playTune(soundGameOver)
@@ -549,106 +591,128 @@ onInput("k", () => {
   gameState.lastCupSpawnedAt = performance.now()
   playTune(soundMovingCup)
 })
+
+onInput("l", () => {
+  // Restart only after game ends
+  if (gameState.isRunning) return
+
+  newGame()
+})
 // =================================================
 
 // = Game loops ====================================
 // - Moving cups -----------------------------------
-const cupsInterval = setInterval(async () => {
-  const cups = getAll(cup)
+function createCupsInterval() {
+  return setInterval(async () => {
+    const cups = getAll(cup)
 
-  for (let cupObject of cups) {
-    cupObject.x--
+    for (let cupObject of cups) {
+      cupObject.x--
 
-    // Check for customers on tile before
-    const tileBefore = [...getTile(cupObject.x, cupObject.y), ...getTile(cupObject.x - 1, cupObject.y)]
-    const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
-    if (customer) {
-      gameState.score += cupScore
-      printScore()
+      // Check for customers on tile before
+      const tileBefore = [...getTile(cupObject.x, cupObject.y), ...getTile(cupObject.x - 1, cupObject.y)]
+      const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
+      if (customer) {
+        gameState.score += cupScore
+        printScore()
 
-      // Either customer has enough => remove
-      if(Math.random() < customerHasEnoughProbability) {
-        playTune(soundWalkingAway)
-        customer.remove()
-        cupObject.remove()
-      }
-      // Or push him away with need for one more drink (at least)
-      else {
-        playTune(soundCatchingCup)
-        if(customer.x > 0) {
-          customer.x--
-          cupObject.x--
+        // Either customer has enough => remove
+        if (Math.random() < customerHasEnoughProbability) {
+          playTune(soundWalkingAway)
+          customer.remove()
+          cupObject.remove()
         }
-        cupObject.type = cupEmpty
+        // Or push him away with need for one more drink (at least)
+        else {
+          playTune(soundCatchingCup)
+          if (customer.x > 0) {
+            customer.x--
+            cupObject.x--
+          }
+          cupObject.type = cupEmpty
+        }
       }
-    }
 
-    // All the way to the end without a customer = broken glass
-    else if (cupObject.x === 0) {
-      cupObject.type = cupBroken
-      playTune(soundBreakingCup)
-      gameOver()
-    }
-  }
-}, gameState.cupMovingLeftSpeed)
-
-// - Moving empty cups -----------------------------
-const cupsEmptyInterval = setInterval(() => {
-  const cups = getAll(cupEmpty)
-
-  for (let cupObject of cups) {
-    cupObject.x++
-
-    // Empty cup went all the way back
-    if(cupObject.x >= playerObject.x) {
-      // there is no player = broken glass
-      if(cupObject.y + 1 !== playerObject.y) {
-        cupObject.y++
+      // All the way to the end without a customer = broken glass
+      else if (cupObject.x === 0) {
         cupObject.type = cupBroken
         playTune(soundBreakingCup)
         gameOver()
       }
-      else {
-        playTune(soundCatchingCup)
-        cupObject.remove()
+    }
+  }, gameState.cupMovingLeftSpeed)
+}
+
+// - Moving empty cups -----------------------------
+function createCupsEmptyInterval() {
+  return setInterval(() => {
+    const cups = getAll(cupEmpty)
+
+    for (let cupObject of cups) {
+      cupObject.x++
+
+      // Empty cup went all the way back
+      if (cupObject.x >= playerObject.x) {
+        // there is no player = broken glass
+        if (cupObject.y + 1 !== playerObject.y) {
+          cupObject.y++
+          cupObject.type = cupBroken
+          playTune(soundBreakingCup)
+          gameOver()
+        } else {
+          playTune(soundCatchingCup)
+          cupObject.remove()
+        }
       }
     }
-  }
-}, gameState.cupMovingRightSpeed)
-
+  }, gameState.cupMovingRightSpeed)
+}
 
 // - Moving and spawning customers -----------------
-const customersInterval = setInterval(() => {
-  // Move existing customers
-  let customers = []
-  for (let customerType of customerTypes)
-    customers = [...customers, ...getAll(customerType)]
+function createCustomersInterval() {
+  return setInterval(() => {
+    // Move existing customers
+    let customers = []
+    for (let customerType of customerTypes)
+      customers = [...customers, ...getAll(customerType)]
 
-  for (let customerObject of customers) {
-    customerObject.x++
+    for (let customerObject of customers) {
+      customerObject.x++
 
-    if (customerObject.x >= playerObject.x - 1) {
-      playTune(soundAngryCustomer)
-      gameOver()
+      if (customerObject.x >= playerObject.x - 1) {
+        playTune(soundAngryCustomer)
+        gameOver(true, customerObject.y)
+      }
     }
-  }
 
-  // Spawn new random customer
-  gameState.tick++
-  if (gameState.tick % 3 !== 0) return // Spawn new one only every 3rd tick
+    // Spawn new random customer
+    gameState.tick++
+    if (gameState.tick % 3 !== 0) return // Spawn new one only every 3rd tick
 
-  const benchIndex = getRandomInt(0, benchesCount)
-  const customerType = getRandomItem(customerTypes)
+    const benchIndex = getRandomInt(0, benchesCount)
+    const customerType = getRandomItem(customerTypes)
 
-  playTune(soundWalkingCustomer)
-  addSprite(0, benchIndex * 2, customerType)
-}, gameState.customerMovingSpeed)
+    playTune(soundWalkingCustomer)
+    addSprite(0, benchIndex * 2, customerType)
+  }, gameState.customerMovingSpeed)
+}
 
 // - Level up --------------------------------------
-const levelUpInterval = setInterval(() => {
-  playTune(soundLevelUp)
-  gameState.cupMovingLeftSpeed *= 0.8
-  gameState.cupMovingRightSpeed *= 0.8
-  gameState.customerMovingSpeed *= 0.8
-}, 1000)
+function createLevelUpInterval() {
+  return setInterval(() => {
+    playTune(soundLevelUp)
+    gameState.cupMovingLeftSpeed *= 0.8
+    gameState.cupMovingRightSpeed *= 0.8
+    gameState.customerMovingSpeed *= 0.8
+
+    clearInterval(cupsInterval)
+    cupsInterval = createCupsInterval()
+
+    clearInterval(cupsEmptyInterval)
+    cupsEmptyInterval = createCupsEmptyInterval()
+
+    clearInterval(customersInterval)
+    customersInterval = createCustomersInterval()
+  }, levelUpIntervalDuration)
+}
 // =================================================
