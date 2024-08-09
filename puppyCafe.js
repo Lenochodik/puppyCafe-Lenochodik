@@ -371,6 +371,12 @@ const soundCatchingCup = tune`
 100: D5~100,
 100: E5~100,
 2800`
+const soundWalkingAway = tune`
+100: B4^100,
+100: C5^100,
+100: D5^100,
+100: G5-100,
+2800`
 const soundGameOver = tune`
   122.95081967213115: C5/122.95081967213115 + E5/122.95081967213115,
   122.95081967213115: B4/122.95081967213115 + D5/122.95081967213115,
@@ -407,6 +413,13 @@ const soundAngryCustomer = tune`
   155.44041450777203: A5/155.44041450777203 + G5^155.44041450777203,
   155.44041450777203: B5/155.44041450777203 + A5^155.44041450777203,
   4041.450777202073`
+const soundLevelUp = tune`
+100: B4/100,
+100: D5/100,
+100: G5/100,
+100: E5/100 + D5/100,
+100: G5/100,
+2700`
 // =================================================
 
 
@@ -435,6 +448,8 @@ const cupMovingLeftSpeed = 100
 const cupMovingRightSpeed = 1250/2
 const customerMovingSpeed = 1250
 
+const levelUpIntervalDuration = 60 * 1000
+
 const customerHasEnoughProbability = 0.6
 
 const customerTypes = [customer1, customer2, customer3, customer4]
@@ -448,6 +463,9 @@ let gameState = {
   tick: 0,
   score: 0,
   lastCupSpawnedAt: 0,
+  cupMovingLeftSpeed: cupMovingLeftSpeed,
+  cupMovingRightSpeed: cupMovingRightSpeed,
+  customerMovingSpeed: customerMovingSpeed,
 }
 // =================================================
 
@@ -459,6 +477,8 @@ addSprite(playerMaxX, playerStartY, player)
 const playerObject = getFirst(player)
 
 printScore()
+
+playTune(soundGameOn)
 // =================================================
 
 // = Functions =====================================
@@ -496,6 +516,7 @@ async function gameOver() {
   clearInterval(customersInterval)
   clearInterval(cupsInterval)
   clearInterval(cupsEmptyInterval)
+  clearInterval(levelUpInterval)
 
   await delay(1000)
   playTune(soundGameOver)
@@ -532,7 +553,7 @@ onInput("k", () => {
 
 // = Game loops ====================================
 // - Moving cups -----------------------------------
-const cupsInterval = setInterval(() => {
+const cupsInterval = setInterval(async () => {
   const cups = getAll(cup)
 
   for (let cupObject of cups) {
@@ -542,20 +563,22 @@ const cupsInterval = setInterval(() => {
     const tileBefore = [...getTile(cupObject.x, cupObject.y), ...getTile(cupObject.x - 1, cupObject.y)]
     const customer = tileBefore.find(sprite => customerTypes.includes(sprite.type))
     if (customer) {
-      playTune(soundCatchingCup)
-
       gameState.score += cupScore
       printScore()
 
       // Either customer has enough => remove
       if(Math.random() < customerHasEnoughProbability) {
+        playTune(soundWalkingAway)
         customer.remove()
         cupObject.remove()
       }
       // Or push him away with need for one more drink (at least)
       else {
-        customer.x--
-        cupObject.x--
+        playTune(soundCatchingCup)
+        if(customer.x > 0) {
+          customer.x--
+          cupObject.x--
+        }
         cupObject.type = cupEmpty
       }
     }
@@ -567,7 +590,7 @@ const cupsInterval = setInterval(() => {
       gameOver()
     }
   }
-}, cupMovingLeftSpeed)
+}, gameState.cupMovingLeftSpeed)
 
 // - Moving empty cups -----------------------------
 const cupsEmptyInterval = setInterval(() => {
@@ -580,8 +603,8 @@ const cupsEmptyInterval = setInterval(() => {
     if(cupObject.x >= playerObject.x) {
       // there is no player = broken glass
       if(cupObject.y + 1 !== playerObject.y) {
-        cupObject.type = cupBroken
         cupObject.y++
+        cupObject.type = cupBroken
         playTune(soundBreakingCup)
         gameOver()
       }
@@ -591,7 +614,7 @@ const cupsEmptyInterval = setInterval(() => {
       }
     }
   }
-}, cupMovingRightSpeed)
+}, gameState.cupMovingRightSpeed)
 
 
 // - Moving and spawning customers -----------------
@@ -612,12 +635,20 @@ const customersInterval = setInterval(() => {
 
   // Spawn new random customer
   gameState.tick++
-  if (gameState.tick % 3 === 0) return // Spawn new one only every 2nd tick
+  if (gameState.tick % 3 !== 0) return // Spawn new one only every 3rd tick
 
   const benchIndex = getRandomInt(0, benchesCount)
   const customerType = getRandomItem(customerTypes)
 
   playTune(soundWalkingCustomer)
   addSprite(0, benchIndex * 2, customerType)
-}, customerMovingSpeed)
+}, gameState.customerMovingSpeed)
+
+// - Level up --------------------------------------
+const levelUpInterval = setInterval(() => {
+  playTune(soundLevelUp)
+  gameState.cupMovingLeftSpeed *= 0.8
+  gameState.cupMovingRightSpeed *= 0.8
+  gameState.customerMovingSpeed *= 0.8
+}, 1000)
 // =================================================
