@@ -24,4 +24,4 @@ Be quick! This game gets faster as it goes!
 
 
 ## 🕹 Play the game (Sprig Gallery)
-You can play game in current state here: [https://sprig.hackclub.com/gallery/PuppyCafe](https://sprig.hackclub.com/gallery/PuppyCafe)
+You can play game in Sprig Gallery: [https://sprig.hackclub.com/gallery/PuppyCafe](https://sprig.hackclub.com/gallery/PuppyCafe)
