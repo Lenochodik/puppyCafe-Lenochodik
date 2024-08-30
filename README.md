@@ -21,3 +21,7 @@ Be quick! This game gets faster as it goes!
 ![PuppyCafe](https://github.com/user-attachments/assets/ab6cb2d5-9e32-401c-a649-e7bb82d2c179)
 ![PuppyCafe_2](https://github.com/user-attachments/assets/86a841c5-2777-4f23-b136-9bccc61ac7ce)
 ![PuppyCafe_3](https://github.com/user-attachments/assets/009c6a17-9f57-44b8-8c12-b2bdb04971db)
+
+
+## 🕹 Play the game (Sprig Gallery)
+You can play game in current state here: [https://sprig.hackclub.com/gallery/PuppyCafe](https://sprig.hackclub.com/gallery/PuppyCafe)
